@@ -7,12 +7,15 @@ import (
 	"time"
 )
 
+// RedigoServiceConfiguration is the configuration for the `RedigoService`
 type RedigoServiceConfiguration struct {
 	Address     string `yaml:"address"`
 	MaxIdle     int    `yaml:"max_idle"`
 	IdleTimeout int    `yaml:"idle_timeout_ms"`
 }
 
+// RedigoService is the service which manages a Redis connection using the
+// `redigo` library.
 type RedigoService struct {
 	redis.Args
 	running       bool
@@ -26,6 +29,7 @@ func (service *RedigoService) LoadConfiguration() (interface{}, error) {
 	return nil, errors.New("not implemented")
 }
 
+// ApplyConfiguration applies a given configuration to the service.
 func (service *RedigoService) ApplyConfiguration(configuration interface{}) error {
 	switch c := configuration.(type) {
 	case RedigoServiceConfiguration:
@@ -38,6 +42,7 @@ func (service *RedigoService) ApplyConfiguration(configuration interface{}) erro
 	return http.ErrWrongConfigurationInformed
 }
 
+// Restart stops and then starts the service again.
 func (service *RedigoService) Restart() error {
 	if service.running {
 		err := service.Stop()
@@ -48,6 +53,7 @@ func (service *RedigoService) Restart() error {
 	return service.Start()
 }
 
+// Start starts the redis pool.
 func (service *RedigoService) Start() error {
 	if !service.running {
 		service.pool = &redis.Pool{
@@ -70,10 +76,14 @@ func (service *RedigoService) Start() error {
 	return nil
 }
 
+// newConn is used inside of the connection pool definition to create new
+// connections.
 func (service *RedigoService) newConn() (redis.Conn, error) {
 	return redis.Dial("tcp", service.Configuration.Address)
 }
 
+// testOnBorrow is used inside of the connection pool definition for testing
+// connection before they be acquired.
 func (service *RedigoService) testOnBorrow(conn redis.Conn, lastUsage time.Time) error {
 	if time.Since(lastUsage) < 1*time.Minute {
 		return nil
@@ -82,6 +92,7 @@ func (service *RedigoService) testOnBorrow(conn redis.Conn, lastUsage time.Time)
 	return err
 }
 
+// Stop closes the connection pool.
 func (service *RedigoService) Stop() error {
 	if service.running {
 		err := service.pool.Close()
@@ -93,6 +104,8 @@ func (service *RedigoService) Stop() error {
 	return nil
 }
 
+// RunWithConn acquires the connection from a pool ensuring it will be put back
+// after the handler is done.
 func (service *RedigoService) RunWithConn(handler RedigoServiceConnHandler) error {
 	if !service.running {
 		return http.ErrServiceNotRunning
