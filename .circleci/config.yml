@@ -22,7 +22,5 @@ jobs:
 
       - run: go get -u github.com/onsi/ginkgo/ginkgo
       - run: make deps-ci
-      - run: |
-          make coverage
-          cp .cover/cover.out coverage.txt
+      - run: make coverage-ci
       - run: bash <(curl -s https://codecov.io/bash)
