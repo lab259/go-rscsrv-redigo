@@ -18,7 +18,7 @@ func TestService(t *testing.T) {
 	macchiato.RunSpecs(t, "Redigo Test Suite")
 }
 
-func pingConnection(conn redis.Conn) error {
+func pingConnection(conn redis.ConnWithTimeout) error {
 	Expect(conn.Err()).To(BeNil())
 	_, err := conn.Do("PING")
 	Expect(err).To(BeNil())
@@ -99,7 +99,7 @@ var _ = Describe("RedigoService", func() {
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())
 		Expect(service.Stop()).To(BeNil())
-		Expect(service.RunWithConn(func(conn redis.Conn) error {
+		Expect(service.RunWithConn(func(conn redis.ConnWithTimeout) error {
 			return nil
 		})).To(Equal(http.ErrServiceNotRunning))
 	})
@@ -131,7 +131,7 @@ var _ = Describe("RedigoService", func() {
 			Address: "localhost:6379",
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())
-		Expect(service.RunWithConn(func(conn redis.Conn) error {
+		Expect(service.RunWithConn(func(conn redis.ConnWithTimeout) error {
 			Expect(service.testOnBorrow(conn, time.Now().Add(-time.Minute-time.Second))).To(BeNil())
 			return nil
 		})).To(BeNil())

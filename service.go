@@ -23,7 +23,7 @@ type RedigoService struct {
 	Configuration RedigoServiceConfiguration
 }
 
-type RedigoServiceConnHandler func(conn redis.Conn) error
+type RedigoServiceConnHandler func(conn redis.ConnWithTimeout) error
 
 func (service *RedigoService) LoadConfiguration() (interface{}, error) {
 	return nil, errors.New("not implemented")
@@ -115,5 +115,5 @@ func (service *RedigoService) RunWithConn(handler RedigoServiceConnHandler) erro
 		return conn.Err()
 	}
 	defer conn.Close()
-	return handler(conn)
+	return handler(conn.(redis.ConnWithTimeout))
 }
