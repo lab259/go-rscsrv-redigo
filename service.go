@@ -1,4 +1,4 @@
-package http_redigo_service
+package redigosrv
 
 import (
 	"github.com/gomodule/redigo/redis"

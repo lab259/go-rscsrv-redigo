@@ -1,15 +1,16 @@
-package http_redigo_service
+package redigosrv
 
 import (
+	"errors"
+	"log"
+	"testing"
+	"time"
+
+	"github.com/gomodule/redigo/redis"
+	"github.com/jamillosantos/http"
+	"github.com/jamillosantos/macchiato"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/jamillosantos/macchiato"
-	"testing"
-	"log"
-	"github.com/jamillosantos/http"
-	"github.com/gomodule/redigo/redis"
-	"time"
-	"errors"
 )
 
 func TestService(t *testing.T) {
