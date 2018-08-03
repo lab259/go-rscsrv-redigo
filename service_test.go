@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/jamillosantos/http"
 	"github.com/jamillosantos/macchiato"
+	"github.com/lab259/http"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

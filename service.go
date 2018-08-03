@@ -1,10 +1,11 @@
 package redigosrv
 
 import (
-	"github.com/gomodule/redigo/redis"
 	"errors"
-	"github.com/jamillosantos/http"
 	"time"
+
+	"github.com/gomodule/redigo/redis"
+	"github.com/lab259/http"
 )
 
 // RedigoServiceConfiguration is the configuration for the `RedigoService`
