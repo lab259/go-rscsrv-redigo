@@ -6,7 +6,7 @@ jobs:
 
     - image: circleci/redis:4.0.9
 
-    working_directory: /go/src/github.com/jamillosantos/http-redigo-service
+    working_directory: /go/src/github.com/lab259/http-redigo-service
     steps:
       - checkout
 
