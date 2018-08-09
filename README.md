@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/lab259/http-redigo-service.svg?style=svg)](https://circleci.com/gh/lab259/http-redigo-service) [![codecov](https://codecov.io/gh/lab259/http-redigo-service/branch/master/graph/badge.svg)](https://codecov.io/gh/lab259/http-redigo-service)
+[![CircleCI](https://circleci.com/gh/lab259/http-redigo-service.svg?style=shield)](https://circleci.com/gh/lab259/http-redigo-service) [![codecov](https://codecov.io/gh/lab259/http-redigo-service/branch/master/graph/badge.svg)](https://codecov.io/gh/lab259/http-redigo-service)
 
 # http-redigo-service
 

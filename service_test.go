@@ -150,4 +150,16 @@ var _ = Describe("RedigoService", func() {
 		Expect(err).NotTo(BeNil())
 		Expect(err.Error()).To(ContainSubstring("this error should show up"))
 	})
+
+	It("should get a connection from the pool", func() {
+		var service RedigoService
+		Expect(service.ApplyConfiguration(RedigoServiceConfiguration{
+			Address: "localhost:6379",
+		})).To(BeNil())
+		Expect(service.Start()).To(BeNil())
+		conn, err := service.GetConn()
+		Expect(err).To(BeNil())
+		_, err = conn.Do("PING")
+		Expect(err).To(BeNil())
+	})
 })

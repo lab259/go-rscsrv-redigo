@@ -118,3 +118,12 @@ func (service *RedigoService) RunWithConn(handler RedigoServiceConnHandler) erro
 	defer conn.Close()
 	return handler(conn.(redis.ConnWithTimeout))
 }
+
+// GetConn gets a connection from the pool.
+func (service *RedigoService) GetConn() (redis.Conn, error) {
+	conn := service.pool.Get()
+	if conn.Err() != nil {
+		return nil, conn.Err()
+	}
+	return conn, nil
+}
