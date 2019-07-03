@@ -15,3 +15,5 @@
 .vscode/
 .gopath/
 .cover/
+test-results/
+*.coverprofile

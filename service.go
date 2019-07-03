@@ -5,14 +5,23 @@ import (
 	"time"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/lab259/http"
+	"github.com/lab259/go-rscsrv"
 )
 
-// RedigoServiceConfiguration is the configuration for the `RedigoService`
-type RedigoServiceConfiguration struct {
-	Address     string `yaml:"address"`
-	MaxIdle     int    `yaml:"max_idle"`
-	IdleTimeout int    `yaml:"idle_timeout_ms"`
+// PubSubConfiguration is the configuration for PubSub
+// connections and subscriptions.
+type PubSubConfiguration struct {
+	ReadTimeout         time.Duration `yaml:"read_timeout"`
+	WriteTimeout        time.Duration `yaml:"write_timeout"`
+	HealthCheckInterval time.Duration `yaml:"health_check_interval"`
+}
+
+// Configuration is the configuration for the `RedigoService`.
+type Configuration struct {
+	Address     string              `yaml:"address"`
+	MaxIdle     int                 `yaml:"max_idle"`
+	IdleTimeout time.Duration       `yaml:"idle_timeout"`
+	PubSub      PubSubConfiguration `yaml:"pubsub"`
 }
 
 // RedigoService is the service which manages a Redis connection using the
@@ -21,10 +30,10 @@ type RedigoService struct {
 	redis.Args
 	running       bool
 	pool          *redis.Pool
-	Configuration RedigoServiceConfiguration
+	Configuration Configuration
 }
 
-type RedigoServiceConnHandler func(conn redis.ConnWithTimeout) error
+type ConnHandler func(conn redis.ConnWithTimeout) error
 
 func (service *RedigoService) LoadConfiguration() (interface{}, error) {
 	return nil, errors.New("not implemented")
@@ -33,14 +42,26 @@ func (service *RedigoService) LoadConfiguration() (interface{}, error) {
 // ApplyConfiguration applies a given configuration to the service.
 func (service *RedigoService) ApplyConfiguration(configuration interface{}) error {
 	switch c := configuration.(type) {
-	case RedigoServiceConfiguration:
+	case Configuration:
 		service.Configuration = c
-		return nil
-	case *RedigoServiceConfiguration:
+	case *Configuration:
 		service.Configuration = *c
-		return nil
+	default:
+		return rscsrv.ErrWrongConfigurationInformed
 	}
-	return http.ErrWrongConfigurationInformed
+
+	// set defaults for pubsub if not present
+	if service.Configuration.PubSub.HealthCheckInterval == 0 {
+		service.Configuration.PubSub.HealthCheckInterval = time.Minute
+	}
+	if service.Configuration.PubSub.ReadTimeout == 0 {
+		service.Configuration.PubSub.ReadTimeout = 10*time.Second + service.Configuration.PubSub.HealthCheckInterval
+	}
+	if service.Configuration.PubSub.WriteTimeout == 0 {
+		service.Configuration.PubSub.WriteTimeout = 10 * time.Second
+	}
+
+	return nil
 }
 
 // Restart stops and then starts the service again.
@@ -59,7 +80,7 @@ func (service *RedigoService) Start() error {
 	if !service.running {
 		service.pool = &redis.Pool{
 			MaxIdle:      service.Configuration.MaxIdle,
-			IdleTimeout:  time.Millisecond * time.Duration(service.Configuration.IdleTimeout),
+			IdleTimeout:  service.Configuration.IdleTimeout,
 			Dial:         service.newConn,
 			TestOnBorrow: service.testOnBorrow,
 		}
@@ -107,9 +128,9 @@ func (service *RedigoService) Stop() error {
 
 // RunWithConn acquires the connection from a pool ensuring it will be put back
 // after the handler is done.
-func (service *RedigoService) RunWithConn(handler RedigoServiceConnHandler) error {
+func (service *RedigoService) RunWithConn(handler ConnHandler) error {
 	if !service.running {
-		return http.ErrServiceNotRunning
+		return rscsrv.ErrServiceNotRunning
 	}
 	conn := service.pool.Get()
 	if conn.Err() != nil {

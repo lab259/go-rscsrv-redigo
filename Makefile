@@ -1,21 +1,19 @@
-
-GOPATH=$(CURDIR)/.gopath
-GOPATHCMD=GOPATH=$(GOPATH)
-
 COVERDIR=$(CURDIR)/.cover
 COVERAGEFILE=$(COVERDIR)/cover.out
+COVERAGEREPORT=$(COVERDIR)/report.html
 
-.PHONY: deps deps-ci coverage coverage-ci test test-watch coverage coverage-html
+dcup:
+	@test -z $$CI && docker-compose up -d || true
 
-test:
-	@${GOPATHCMD} ginkgo --failFast ./...
+test: dcup
+	@ginkgo --failFast ./...
 
-test-watch:
-	@${GOPATHCMD} ginkgo watch -cover -r ./...
+test-watch: dcup
+	@ginkgo watch -cover -r ./...
 
-coverage-ci:
+coverage-ci: dcup
 	@mkdir -p $(COVERDIR)
-	@${GOPATHCMD} ginkgo -r -covermode=count --cover --trace ./
+	@ginkgo -r -covermode=count --cover --trace ./
 	@echo "mode: count" > "${COVERAGEFILE}"
 	@find . -type f -name *.coverprofile -exec grep -h -v "^mode:" {} >> "${COVERAGEFILE}" \; -exec rm -f {} \;
 
@@ -23,12 +21,7 @@ coverage: coverage-ci
 	@sed -i -e "s|_$(CURDIR)/|./|g" "${COVERAGEFILE}"
 
 coverage-html:
-	@$(GOPATHCMD) go tool cover -html="${COVERAGEFILE}" -o .cover/report.html
+	@go tool cover -html="${COVERAGEFILE}" -o $(COVERAGEREPORT)
+	@xdg-open $(COVERAGEREPORT) 2> /dev/null > /dev/null
 
-deps:
-	@mkdir -p ${GOPATH}
-	@go list -f '{{join .Deps "\n"}}' . | xargs go list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' | GOPATH=${GOPATH} xargs go get -v -t
-	@go list -f '{{join .TestImports "\n"}}' . | xargs go list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' | GOPATH=${GOPATH} xargs go get -v -t
-
-deps-ci:
-	-go get -v -t ./...
+.PHONY: dcup test test-watch coverage coverage-ci coverage-html
