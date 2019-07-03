@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/lab259/http"
+	"github.com/lab259/go-rscsrv"
 )
 
 // RedigoServiceConfiguration is the configuration for the `RedigoService`
@@ -40,7 +40,7 @@ func (service *RedigoService) ApplyConfiguration(configuration interface{}) erro
 		service.Configuration = *c
 		return nil
 	}
-	return http.ErrWrongConfigurationInformed
+	return rscsrv.ErrWrongConfigurationInformed
 }
 
 // Restart stops and then starts the service again.
@@ -109,7 +109,7 @@ func (service *RedigoService) Stop() error {
 // after the handler is done.
 func (service *RedigoService) RunWithConn(handler RedigoServiceConnHandler) error {
 	if !service.running {
-		return http.ErrServiceNotRunning
+		return rscsrv.ErrServiceNotRunning
 	}
 	conn := service.pool.Get()
 	if conn.Err() != nil {

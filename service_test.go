@@ -3,20 +3,33 @@ package redigosrv
 import (
 	"errors"
 	"log"
+	"os"
+	"path"
 	"testing"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/jamillosantos/macchiato"
-	"github.com/lab259/http"
+	"github.com/lab259/go-rscsrv"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 )
 
 func TestService(t *testing.T) {
 	log.SetOutput(GinkgoWriter)
 	RegisterFailHandler(Fail)
-	macchiato.RunSpecs(t, "Redigo Test Suite")
+	description := "Redigo Test Suite"
+	if os.Getenv("CI") == "" {
+		macchiato.RunSpecs(t, description)
+	} else {
+		reporterOutputDir := "./test-results/go-rscsrv-redigo"
+		os.MkdirAll(reporterOutputDir, os.ModePerm)
+		junitReporter := reporters.NewJUnitReporter(path.Join(reporterOutputDir, "results.xml"))
+		macchiatoReporter := macchiato.NewReporter()
+		RunSpecsWithCustomReporters(t, description, []ginkgo.Reporter{macchiatoReporter, junitReporter})
+	}
 }
 
 func pingConnection(conn redis.ConnWithTimeout) error {
@@ -54,7 +67,7 @@ var _ = Describe("RedigoService", func() {
 		err := service.ApplyConfiguration(map[string]interface{}{
 			"address": "localhost",
 		})
-		Expect(err).To(Equal(http.ErrWrongConfigurationInformed))
+		Expect(err).To(Equal(rscsrv.ErrWrongConfigurationInformed))
 	})
 
 	It("should apply the configuration using a pointer", func() {
@@ -102,7 +115,7 @@ var _ = Describe("RedigoService", func() {
 		Expect(service.Stop()).To(BeNil())
 		Expect(service.RunWithConn(func(conn redis.ConnWithTimeout) error {
 			return nil
-		})).To(Equal(http.ErrServiceNotRunning))
+		})).To(Equal(rscsrv.ErrServiceNotRunning))
 	})
 
 	It("should restart the service", func() {
