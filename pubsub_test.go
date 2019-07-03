@@ -9,7 +9,7 @@ import (
 )
 
 var _ = Describe("RedigoService (PubSub)", func() {
-	It("should subscribe and publish messages", func() {
+	It("should subscribe and publish messages", func(done Done) {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
@@ -29,9 +29,11 @@ var _ = Describe("RedigoService (PubSub)", func() {
 			cancel()
 			return nil
 		}, "test-01")).To(Succeed())
+
+		close(done)
 	})
 
-	It("should subscribe and publish raw messages", func() {
+	It("should subscribe and publish raw messages", func(done Done) {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
@@ -51,9 +53,11 @@ var _ = Describe("RedigoService (PubSub)", func() {
 			cancel()
 			return nil
 		}, "test-01")).To(Succeed())
+
+		close(done)
 	})
 
-	It("should propagate error from subscribed handler", func() {
+	It("should propagate error from subscribed handler", func(done Done) {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
@@ -74,9 +78,11 @@ var _ = Describe("RedigoService (PubSub)", func() {
 
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(Equal("something bad"))
+
+		close(done)
 	})
 
-	It("should propagate error from subscription handler", func() {
+	It("should propagate error from subscription handler", func(done Done) {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
@@ -97,5 +103,7 @@ var _ = Describe("RedigoService (PubSub)", func() {
 
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(Equal("something bad"))
+
+		close(done)
 	})
 })
