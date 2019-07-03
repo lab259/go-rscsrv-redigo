@@ -72,33 +72,33 @@ var _ = Describe("RedigoService", func() {
 
 	It("should apply the configuration using a pointer", func() {
 		var service RedigoService
-		err := service.ApplyConfiguration(&RedigoServiceConfiguration{
+		err := service.ApplyConfiguration(&Configuration{
 			MaxIdle:     1,
-			IdleTimeout: 2,
+			IdleTimeout: 2 * time.Second,
 			Address:     "3",
 		})
 		Expect(err).To(BeNil())
 		Expect(service.Configuration.Address).To(Equal("3"))
-		Expect(service.Configuration.IdleTimeout).To(Equal(2))
+		Expect(service.Configuration.IdleTimeout).To(Equal(2 * time.Second))
 		Expect(service.Configuration.MaxIdle).To(Equal(1))
 	})
 
 	It("should apply the configuration using a copy", func() {
 		var service RedigoService
-		err := service.ApplyConfiguration(RedigoServiceConfiguration{
+		err := service.ApplyConfiguration(Configuration{
 			MaxIdle:     1,
-			IdleTimeout: 2,
+			IdleTimeout: 2 * time.Second,
 			Address:     "3",
 		})
 		Expect(err).To(BeNil())
 		Expect(service.Configuration.Address).To(Equal("3"))
-		Expect(service.Configuration.IdleTimeout).To(Equal(2))
+		Expect(service.Configuration.IdleTimeout).To(Equal(2 * time.Second))
 		Expect(service.Configuration.MaxIdle).To(Equal(1))
 	})
 
 	It("should start the service", func() {
 		var service RedigoService
-		Expect(service.ApplyConfiguration(RedigoServiceConfiguration{
+		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())
@@ -108,7 +108,7 @@ var _ = Describe("RedigoService", func() {
 
 	It("should stop the service", func() {
 		var service RedigoService
-		Expect(service.ApplyConfiguration(RedigoServiceConfiguration{
+		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())
@@ -120,7 +120,7 @@ var _ = Describe("RedigoService", func() {
 
 	It("should restart the service", func() {
 		var service RedigoService
-		Expect(service.ApplyConfiguration(RedigoServiceConfiguration{
+		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())
@@ -130,7 +130,7 @@ var _ = Describe("RedigoService", func() {
 
 	It("should skip the test due to time valid", func() {
 		var service RedigoService
-		Expect(service.ApplyConfiguration(RedigoServiceConfiguration{
+		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())
@@ -141,7 +141,7 @@ var _ = Describe("RedigoService", func() {
 
 	It("should test on borrow", func() {
 		var service RedigoService
-		Expect(service.ApplyConfiguration(RedigoServiceConfiguration{
+		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())
@@ -153,7 +153,7 @@ var _ = Describe("RedigoService", func() {
 
 	It("should error when borrowing", func() {
 		var service RedigoService
-		Expect(service.ApplyConfiguration(RedigoServiceConfiguration{
+		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())
@@ -166,7 +166,7 @@ var _ = Describe("RedigoService", func() {
 
 	It("should get a connection from the pool", func() {
 		var service RedigoService
-		Expect(service.ApplyConfiguration(RedigoServiceConfiguration{
+		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())

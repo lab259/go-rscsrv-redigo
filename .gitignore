@@ -16,3 +16,4 @@
 .gopath/
 .cover/
 test-results/
+*.coverprofile

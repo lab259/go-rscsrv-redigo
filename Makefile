@@ -1,5 +1,6 @@
 COVERDIR=$(CURDIR)/.cover
 COVERAGEFILE=$(COVERDIR)/cover.out
+COVERAGEREPORT=$(COVERDIR)/report.html
 
 dcup:
 	@docker-compose up -d
@@ -20,7 +21,7 @@ coverage: coverage-ci
 	@sed -i -e "s|_$(CURDIR)/|./|g" "${COVERAGEFILE}"
 
 coverage-html:
-	@go tool cover -html="${COVERAGEFILE}" -o .cover/report.html
-
+	@go tool cover -html="${COVERAGEFILE}" -o $(COVERAGEREPORT)
+	@xdg-open $(COVERAGEREPORT) 2> /dev/null > /dev/null
 
 .PHONY: dcup test test-watch coverage coverage-ci coverage-html
