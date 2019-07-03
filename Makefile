@@ -3,7 +3,7 @@ COVERAGEFILE=$(COVERDIR)/cover.out
 COVERAGEREPORT=$(COVERDIR)/report.html
 
 dcup:
-	@docker-compose up -d
+	@test -z $$CI && docker-compose up -d || true
 
 test: dcup
 	@ginkgo --failFast ./...
