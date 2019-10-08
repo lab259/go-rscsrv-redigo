@@ -28,13 +28,15 @@ type Configuration struct {
 // `redigo` library.
 type RedigoService struct {
 	redis.Args
-	running       bool
+	serviceState
 	pool          *redis.Pool
 	Configuration Configuration
 }
 
+// ConnHandler handler redis connection with timeout
 type ConnHandler func(conn redis.ConnWithTimeout) error
 
+// LoadConfiguration loading configuration from a repository.
 func (service *RedigoService) LoadConfiguration() (interface{}, error) {
 	return nil, errors.New("not implemented")
 }
@@ -66,7 +68,7 @@ func (service *RedigoService) ApplyConfiguration(configuration interface{}) erro
 
 // Restart stops and then starts the service again.
 func (service *RedigoService) Restart() error {
-	if service.running {
+	if service.isRunning() {
 		err := service.Stop()
 		if err != nil {
 			return err
@@ -77,7 +79,7 @@ func (service *RedigoService) Restart() error {
 
 // Start starts the redis pool.
 func (service *RedigoService) Start() error {
-	if !service.running {
+	if !service.isRunning() {
 		service.pool = &redis.Pool{
 			MaxIdle:      service.Configuration.MaxIdle,
 			IdleTimeout:  service.Configuration.IdleTimeout,
@@ -93,7 +95,7 @@ func (service *RedigoService) Start() error {
 		if err != nil {
 			return err
 		}
-		service.running = true
+		service.setRunning(true)
 	}
 	return nil
 }
@@ -116,12 +118,12 @@ func (service *RedigoService) testOnBorrow(conn redis.Conn, lastUsage time.Time)
 
 // Stop closes the connection pool.
 func (service *RedigoService) Stop() error {
-	if service.running {
+	if service.isRunning() {
 		err := service.pool.Close()
 		if err != nil {
 			return err
 		}
-		service.running = false
+		service.setRunning(false)
 	}
 	return nil
 }
@@ -129,22 +131,27 @@ func (service *RedigoService) Stop() error {
 // RunWithConn acquires the connection from a pool ensuring it will be put back
 // after the handler is done.
 func (service *RedigoService) RunWithConn(handler ConnHandler) error {
-	if !service.running {
-		return rscsrv.ErrServiceNotRunning
+	if service.isRunning() {
+		conn := service.pool.Get()
+		if conn.Err() != nil {
+			return conn.Err()
+		}
+		defer conn.Close()
+		return handler(conn.(redis.ConnWithTimeout))
 	}
-	conn := service.pool.Get()
-	if conn.Err() != nil {
-		return conn.Err()
-	}
-	defer conn.Close()
-	return handler(conn.(redis.ConnWithTimeout))
+
+	return rscsrv.ErrServiceNotRunning
 }
 
 // GetConn gets a connection from the pool.
 func (service *RedigoService) GetConn() (redis.Conn, error) {
-	conn := service.pool.Get()
-	if conn.Err() != nil {
-		return nil, conn.Err()
+	if service.isRunning() {
+		conn := service.pool.Get()
+		if conn.Err() != nil {
+			return nil, conn.Err()
+		}
+		return conn, nil
 	}
-	return conn, nil
+
+	return nil, rscsrv.ErrServiceNotRunning
 }
