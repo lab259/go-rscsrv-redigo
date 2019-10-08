@@ -131,22 +131,27 @@ func (service *RedigoService) Stop() error {
 // RunWithConn acquires the connection from a pool ensuring it will be put back
 // after the handler is done.
 func (service *RedigoService) RunWithConn(handler ConnHandler) error {
-	if !service.isRunning() {
-		return rscsrv.ErrServiceNotRunning
+	if service.isRunning() {
+		conn := service.pool.Get()
+		if conn.Err() != nil {
+			return conn.Err()
+		}
+		defer conn.Close()
+		return handler(conn.(redis.ConnWithTimeout))
 	}
-	conn := service.pool.Get()
-	if conn.Err() != nil {
-		return conn.Err()
-	}
-	defer conn.Close()
-	return handler(conn.(redis.ConnWithTimeout))
+
+	return rscsrv.ErrServiceNotRunning
 }
 
 // GetConn gets a connection from the pool.
 func (service *RedigoService) GetConn() (redis.Conn, error) {
-	conn := service.pool.Get()
-	if conn.Err() != nil {
-		return nil, conn.Err()
+	if service.isRunning() {
+		conn := service.pool.Get()
+		if conn.Err() != nil {
+			return nil, conn.Err()
+		}
+		return conn, nil
 	}
-	return conn, nil
+
+	return nil, rscsrv.ErrServiceNotRunning
 }
