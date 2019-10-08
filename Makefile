@@ -5,6 +5,9 @@ COVERAGEREPORT=$(COVERDIR)/report.html
 dcup:
 	@test -z $$CI && docker-compose up -d || true
 
+dcdn:
+	@docker-compose down
+
 test: dcup
 	@ginkgo --failFast ./...
 
@@ -24,4 +27,4 @@ coverage-html:
 	@go tool cover -html="${COVERAGEFILE}" -o $(COVERAGEREPORT)
 	@xdg-open $(COVERAGEREPORT) 2> /dev/null > /dev/null
 
-.PHONY: dcup test test-watch coverage coverage-ci coverage-html
+.PHONY: dcup dcdn test test-watch coverage coverage-ci coverage-html

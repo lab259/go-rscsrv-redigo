@@ -33,9 +33,9 @@ func TestService(t *testing.T) {
 }
 
 func pingConnection(conn redis.ConnWithTimeout) error {
-	Expect(conn.Err()).To(BeNil())
+	Expect(conn.Err()).ToNot(HaveOccurred())
 	_, err := conn.Do("PING")
-	Expect(err).To(BeNil())
+	Expect(err).ToNot(HaveOccurred())
 	return nil
 }
 
@@ -57,7 +57,7 @@ var _ = Describe("RedigoService", func() {
 	It("should fail loading a configuration", func() {
 		var service RedigoService
 		configuration, err := service.LoadConfiguration()
-		Expect(err).NotTo(BeNil())
+		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("not implemented"))
 		Expect(configuration).To(BeNil())
 	})
@@ -77,7 +77,7 @@ var _ = Describe("RedigoService", func() {
 			IdleTimeout: 2 * time.Second,
 			Address:     "3",
 		})
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		Expect(service.Configuration.Address).To(Equal("3"))
 		Expect(service.Configuration.IdleTimeout).To(Equal(2 * time.Second))
 		Expect(service.Configuration.MaxIdle).To(Equal(1))
@@ -90,7 +90,7 @@ var _ = Describe("RedigoService", func() {
 			IdleTimeout: 2 * time.Second,
 			Address:     "3",
 		})
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		Expect(service.Configuration.Address).To(Equal("3"))
 		Expect(service.Configuration.IdleTimeout).To(Equal(2 * time.Second))
 		Expect(service.Configuration.MaxIdle).To(Equal(1))
@@ -100,19 +100,19 @@ var _ = Describe("RedigoService", func() {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
+		})).To(Succeed())
+		Expect(service.Start()).To(Succeed())
 		defer service.Stop()
-		Expect(service.RunWithConn(pingConnection)).To(BeNil())
+		Expect(service.RunWithConn(pingConnection)).To(Succeed())
 	})
 
 	It("should stop the service", func() {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
-		Expect(service.Stop()).To(BeNil())
+		})).To(Succeed())
+		Expect(service.Start()).To(Succeed())
+		Expect(service.Stop()).To(Succeed())
 		Expect(service.RunWithConn(func(conn redis.ConnWithTimeout) error {
 			return nil
 		})).To(Equal(rscsrv.ErrServiceNotRunning))
@@ -122,45 +122,45 @@ var _ = Describe("RedigoService", func() {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
-		Expect(service.Restart()).To(BeNil())
-		Expect(service.RunWithConn(pingConnection)).To(BeNil())
+		})).To(Succeed())
+		Expect(service.Start()).To(Succeed())
+		Expect(service.Restart()).To(Succeed())
+		Expect(service.RunWithConn(pingConnection)).To(Succeed())
 	})
 
 	It("should skip the test due to time valid", func() {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
+		})).To(Succeed())
+		Expect(service.Start()).To(Succeed())
 		Expect(service.testOnBorrow(errorConn{
 			err: errors.New("this error should not show up"),
-		}, time.Now().Add(-time.Minute+time.Second))).To(BeNil())
+		}, time.Now().Add(-time.Minute+time.Second))).To(Succeed())
 	})
 
 	It("should test on borrow", func() {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
+		})).To(Succeed())
+		Expect(service.Start()).To(Succeed())
 		Expect(service.RunWithConn(func(conn redis.ConnWithTimeout) error {
-			Expect(service.testOnBorrow(conn, time.Now().Add(-time.Minute-time.Second))).To(BeNil())
+			Expect(service.testOnBorrow(conn, time.Now().Add(-time.Minute-time.Second))).To(Succeed())
 			return nil
-		})).To(BeNil())
+		})).To(Succeed())
 	})
 
 	It("should error when borrowing", func() {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
+		})).To(Succeed())
+		Expect(service.Start()).To(Succeed())
 		err := service.testOnBorrow(errorConn{
 			err: errors.New("this error should show up"),
 		}, time.Now().Add(-time.Minute))
-		Expect(err).NotTo(BeNil())
+		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("this error should show up"))
 	})
 
@@ -168,11 +168,11 @@ var _ = Describe("RedigoService", func() {
 		var service RedigoService
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
+		})).To(Succeed())
+		Expect(service.Start()).To(Succeed())
 		conn, err := service.GetConn()
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = conn.Do("PING")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 })
