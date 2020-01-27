@@ -90,7 +90,7 @@ func (service *RedigoService) Subscribe(ctx context.Context, subscribed Subscrib
 				}
 
 				// Increment to count success
-				service.Collector.subscribeSuccess.Inc()
+				service.Collector.subscribeSuccesses.Inc()
 
 			case redis.Subscription:
 				switch n.Count {
@@ -110,7 +110,7 @@ func (service *RedigoService) Subscribe(ctx context.Context, subscribed Subscrib
 					}
 
 					// Increment to count success
-					service.Collector.subscribeSuccess.Inc()
+					service.Collector.subscribeSuccesses.Inc()
 
 				case 0:
 					// Return from the goroutine when all channels are unsubscribed.

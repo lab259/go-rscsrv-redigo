@@ -201,7 +201,7 @@ var _ = Describe("RedigoCollector", func() {
 			return nil
 		}, "test-05")
 
-		Expect(service.Collector.subscribeSuccess.Write(&metric)).To(BeNil())
+		Expect(service.Collector.subscribeSuccesses.Write(&metric)).To(BeNil())
 
 		Expect(metric.GetCounter().GetValue()).To(Equal(float64(2)))
 		close(done)

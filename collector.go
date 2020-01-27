@@ -12,14 +12,14 @@ type RedigoCollector struct {
 	publishTrafficSize prometheus.Counter
 	methodCalls        *prometheus.CounterVec
 	subscribeAmount    prometheus.Gauge
-	subscribeSuccess   prometheus.Counter
+	subscribeSuccesses prometheus.Counter
 	subscribeFailures  prometheus.Counter
 }
 
 // RedigoCollectorOptions struct to add custom name in metrics
 type RedigoCollectorOptions struct {
-	SplitBy string
-	Prefix  []string
+	Separator string
+	Prefix    []string
 }
 
 const (
@@ -34,8 +34,8 @@ var redigoMetricLabels = []string{"method"}
 //RedigoCollectorDefaultOptions will return the instance of RedigoCollectorDefaultOptions with values default
 func RedigoCollectorDefaultOptions() RedigoCollectorOptions {
 	return RedigoCollectorOptions{
-		SplitBy: "_",
-		Prefix:  []string{"redigo"},
+		Separator: "_",
+		Prefix:    []string{"redigo"},
 	}
 }
 
@@ -49,8 +49,8 @@ func RedigoCollectorDefaultOptions() RedigoCollectorOptions {
 // NewRendigoCollector will return new instance of RedigoCollector with all metrics started
 func NewRendigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 
-	prefix := strings.Join(opts.Prefix[:], opts.SplitBy)
-	prefix += opts.SplitBy
+	prefix := strings.Join(opts.Prefix[:], opts.Separator)
+	prefix += opts.Separator
 
 	return &RedigoCollector{
 		publishTrafficSize: prometheus.NewCounter(prometheus.CounterOpts{
@@ -65,7 +65,7 @@ func NewRendigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 			Name: fmt.Sprintf("%ssubscribeAmount", prefix),
 			Help: "Current total of subscriptions",
 		}),
-		subscribeSuccess: prometheus.NewCounter(prometheus.CounterOpts{
+		subscribeSuccesses: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: fmt.Sprintf("%ssubscribeSuccess", prefix),
 			Help: "Total of success when call Subscribed",
 		}),
@@ -80,7 +80,7 @@ func NewRendigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 func (collector *RedigoCollector) Describe(desc chan<- *prometheus.Desc) {
 	collector.methodCalls.Describe(desc)
 	collector.subscribeAmount.Describe(desc)
-	collector.subscribeSuccess.Describe(desc)
+	collector.subscribeSuccesses.Describe(desc)
 	collector.subscribeFailures.Describe(desc)
 	collector.publishTrafficSize.Describe(desc)
 }
@@ -88,7 +88,7 @@ func (collector *RedigoCollector) Describe(desc chan<- *prometheus.Desc) {
 func (collector *RedigoCollector) Collect(metrics chan<- prometheus.Metric) {
 	collector.methodCalls.Collect(metrics)
 	collector.subscribeAmount.Collect(metrics)
-	collector.subscribeSuccess.Collect(metrics)
+	collector.subscribeSuccesses.Collect(metrics)
 	collector.subscribeFailures.Collect(metrics)
 	collector.publishTrafficSize.Collect(metrics)
 }
