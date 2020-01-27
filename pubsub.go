@@ -18,14 +18,13 @@ type SubscribedHandler func() error
 // Publish sends a data payload to a specific channel.
 func (service *RedigoService) Publish(ctx context.Context, channel string, data interface{}) error {
 
-	counter := service.Collector.publishTrafficSize.With(prometheus.Labels{
-		"method": "publish",
-	})
+	counter := service.Collector.publishTrafficSize
 
 	return service.RunWithConn(func(conn redis.ConnWithTimeout) error {
 		var message []byte
 		switch t := data.(type) {
 		case []byte:
+			// Increment publishTrafficSize with the size of message
 			counter.Add(float64(len(t)))
 			message = t
 		default:
@@ -33,6 +32,7 @@ func (service *RedigoService) Publish(ctx context.Context, channel string, data 
 			if err != nil {
 				return err
 			}
+			// Increment publishTrafficSize with the size of message
 			counter.Add(float64(len(m)))
 			message = m
 		}
@@ -47,8 +47,9 @@ func (service *RedigoService) Publish(ctx context.Context, channel string, data 
 // function is called for each message.
 func (service *RedigoService) Subscribe(ctx context.Context, subscribed SubscribedHandler, subscription SubscriptionHandler, channels ...string) error {
 
-	service.Collector.subscribeCalls.With(prometheus.Labels{
-		"method": "subscribe",
+	// Total of calls of method
+	service.Collector.methodCalls.With(prometheus.Labels{
+		"method": SubscribeMetricMethodName,
 	}).Inc()
 
 	c, err := redis.Dial("tcp", service.Configuration.Address,
@@ -73,21 +74,44 @@ func (service *RedigoService) Subscribe(ctx context.Context, subscribed Subscrib
 		for {
 			switch n := psc.Receive().(type) {
 			case error:
+				// Increment to count failures
+				service.Collector.subscribeFailures.Inc()
+
 				done <- n
 				return
 			case redis.Message:
 				if err := subscription(n.Channel, n.Data); err != nil {
+
+					// Increment to count failures
+					service.Collector.subscribeFailures.Inc()
+
 					done <- err
 					return
 				}
+
+				// Increment to count success
+				service.Collector.subscribeSuccess.Inc()
+
 			case redis.Subscription:
 				switch n.Count {
 				case len(channels):
+
+					// Increment 1 in subscribeAmount
+					service.Collector.subscribeAmount.Inc()
+
 					// Notify application when all channels are subscribed.
 					if err := subscribed(); err != nil {
+
+						// Increment to count failures
+						service.Collector.subscribeFailures.Inc()
+
 						done <- err
 						return
 					}
+
+					// Increment to count success
+					service.Collector.subscribeSuccess.Inc()
+
 				case 0:
 					// Return from the goroutine when all channels are unsubscribed.
 					done <- nil
@@ -110,6 +134,10 @@ loop:
 			// corresponding pong is not received, then receive on the
 			// connection will timeout and the receive goroutine will exit.
 			if err = psc.Ping(""); err != nil {
+
+				// Increment to count failures
+				service.Collector.subscribeFailures.Inc()
+
 				break loop
 			}
 		case <-ctx.Done():
@@ -119,6 +147,9 @@ loop:
 			return err
 		}
 	}
+
+	// Decrement 1 in subscribeAmount
+	service.Collector.subscribeAmount.Dec()
 
 	// Signal the receiving goroutine to exit by unsubscribing from all channels.
 	psc.Unsubscribe()
