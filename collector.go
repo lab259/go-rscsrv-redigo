@@ -46,8 +46,8 @@ func RedigoCollectorDefaultOptions() RedigoCollectorOptions {
 	Exit: redigo_publishTrafficSize
 */
 
-// NewRendigoCollector will return new instance of RedigoCollector with all metrics started
-func NewRendigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
+// NewRedigoCollector will return new instance of RedigoCollector with all metrics started
+func NewRedigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 
 	prefix := strings.Join(opts.Prefix[:], opts.Separator)
 	prefix += opts.Separator

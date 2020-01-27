@@ -96,7 +96,7 @@ func (service *RedigoService) Start() error {
 		if err != nil {
 			return err
 		}
-		service.Collector = NewRendigoCollector(RedigoCollectorDefaultOptions())
+		service.Collector = NewRedigoCollector(RedigoCollectorDefaultOptions())
 		service.setRunning(true)
 	}
 	return nil
