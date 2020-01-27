@@ -71,6 +71,9 @@ func (service *RedigoService) Subscribe(ctx context.Context, subscribed Subscrib
 
 	// Start a goroutine to receive notifications from the server.
 	go func() {
+
+		defer recovery(done)
+
 		for {
 			switch n := psc.Receive().(type) {
 			case error:
