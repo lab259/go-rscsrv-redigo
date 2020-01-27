@@ -43,7 +43,7 @@ func RedigoCollectorDefaultOptions() RedigoCollectorOptions {
 	Output with default options:
 
 	Ex: fmt.Sprintf("%spublishTrafficSize", prefix)
-	Exit: redigo_publishTrafficSize
+	Exit: redigo_publish_traffic_size
 */
 
 // NewRedigoCollector will return new instance of RedigoCollector with all metrics started
@@ -54,23 +54,23 @@ func NewRedigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 
 	return &RedigoCollector{
 		publishTrafficSize: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%spublishTrafficSize", prefix),
+			Name: fmt.Sprintf("%spublish_traffic_size", prefix),
 			Help: "Total of data trafficked",
 		}),
 		methodCalls: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%smethodCalls", prefix),
+			Name: fmt.Sprintf("%smethod_calls", prefix),
 			Help: "Total of calls of method Subscribe (Success or failures)",
 		}, redigoMetricLabels),
 		subscribeAmount: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%ssubscribeAmount", prefix),
+			Name: fmt.Sprintf("%ssubscribe_amount", prefix),
 			Help: "Current total of subscriptions",
 		}),
 		subscribeSuccesses: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%ssubscribeSuccess", prefix),
+			Name: fmt.Sprintf("%ssubscribe_success", prefix),
 			Help: "Total of success when call Subscribed",
 		}),
 		subscribeFailures: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%ssubscribeFailures", prefix),
+			Name: fmt.Sprintf("%ssubscribe_failures", prefix),
 			Help: "Total of failed when call Subscribed",
 		}),
 	}

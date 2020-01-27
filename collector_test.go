@@ -66,7 +66,7 @@ var _ = Describe("RedigoCollector", func() {
 			"method": SubscribeMetricMethodName,
 		}).Write(&metric)).To(BeNil())
 
-		Expect(metric.GetCounter().GetValue()).To(Equal(float64(2)))
+		Expect(metric.GetCounter().GetValue()).To(Equal(float64(4)))
 		close(done)
 	})
 

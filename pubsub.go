@@ -20,6 +20,11 @@ func (service *RedigoService) Publish(ctx context.Context, channel string, data 
 
 	counter := service.Collector.publishTrafficSize
 
+	// Total of calls of method
+	service.Collector.methodCalls.With(prometheus.Labels{
+		"method": SubscribeMetricMethodName,
+	}).Inc()
+
 	return service.RunWithConn(func(conn redis.ConnWithTimeout) error {
 		var message []byte
 		switch t := data.(type) {
