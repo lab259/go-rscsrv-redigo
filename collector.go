@@ -20,7 +20,6 @@ type RedigoCollector struct {
 type RedigoCollectorOptions struct {
 	SplitBy string
 	Prefix  []string
-	Suffix  []string
 }
 
 const (
@@ -37,50 +36,41 @@ func RedigoCollectorDefaultOptions() RedigoCollectorOptions {
 	return RedigoCollectorOptions{
 		SplitBy: "_",
 		Prefix:  []string{"redigo"},
-		Suffix:  []string{"collector"},
 	}
 }
 
 /*
 	Output with default options:
 
-	Ex: fmt.Sprintf("%spublishTrafficSize%s", prefix, suffix)
-	Exit: redigo_publishTrafficSize_collector
+	Ex: fmt.Sprintf("%spublishTrafficSize", prefix)
+	Exit: redigo_publishTrafficSize
 */
 
 // NewRendigoCollector will return new instance of RedigoCollector with all metrics started
 func NewRendigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 
 	prefix := strings.Join(opts.Prefix[:], opts.SplitBy)
-	suffix := strings.Join(opts.Suffix[:], opts.SplitBy)
-
-	if len(opts.Prefix) == 1 {
-		prefix += opts.SplitBy
-	}
-
-	if len(opts.Suffix) == 1 {
-		suffix += opts.SplitBy
-	}
+	prefix += opts.SplitBy
 
 	return &RedigoCollector{
 		publishTrafficSize: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%spublishTrafficSize%s", prefix, suffix),
+			Name: fmt.Sprintf("%spublishTrafficSize", prefix),
 			Help: "Total of data trafficked",
 		}),
 		methodCalls: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%ssubscribeCalls%s", prefix, suffix),
+			Name: fmt.Sprintf("%smethodCalls", prefix),
 			Help: "Total of calls of method Subscribe (Success or failures)",
 		}, redigoMetricLabels),
 		subscribeAmount: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%ssubscribeAmount%s", prefix, suffix),
+			Name: fmt.Sprintf("%ssubscribeAmount", prefix),
 			Help: "Current total of subscriptions",
 		}),
 		subscribeSuccess: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%ssubscribeSuccess%s", prefix, suffix),
+			Name: fmt.Sprintf("%ssubscribeSuccess", prefix),
 			Help: "Total of success when call Subscribed",
 		}),
 		subscribeFailures: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%ssubscribeFailures%s", prefix, suffix),
+			Name: fmt.Sprintf("%ssubscribeFailures", prefix),
 			Help: "Total of failed when call Subscribed",
 		}),
 	}
