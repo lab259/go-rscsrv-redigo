@@ -2,10 +2,12 @@ package redigosrv
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/lab259/go-rscsrv"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // PubSubConfiguration is the configuration for PubSub
@@ -32,6 +34,12 @@ type RedigoService struct {
 	pool          *redis.Pool
 	Configuration Configuration
 	Collector     *RedigoCollector
+}
+
+type redigoConn struct {
+	conn      redis.ConnWithTimeout
+	collector *RedigoCollector
+	stats     PoolStats
 }
 
 // ConnHandler handler redis connection with timeout
@@ -139,7 +147,7 @@ func (service *RedigoService) RunWithConn(handler ConnHandler) error {
 			return conn.Err()
 		}
 		defer conn.Close()
-		return handler(conn.(redis.ConnWithTimeout))
+		return handler(&redigoConn{conn: conn.(redis.ConnWithTimeout), collector: service.Collector})
 	}
 
 	return rscsrv.ErrServiceNotRunning
@@ -152,8 +160,56 @@ func (service *RedigoService) GetConn() (redis.Conn, error) {
 		if conn.Err() != nil {
 			return nil, conn.Err()
 		}
-		return conn, nil
+		return &redigoConn{conn: conn.(redis.ConnWithTimeout), collector: service.Collector}, nil
 	}
-
 	return nil, rscsrv.ErrServiceNotRunning
+}
+
+// Close closes the connection.
+func (rConn *redigoConn) Close() error {
+	return rConn.conn.Close()
+}
+
+// Err returns a non-nil value when the connection is not usable.
+func (rConn *redigoConn) Err() error {
+	return rConn.conn.Err()
+}
+
+// Do sends a command to the server and returns the received reply.
+func (rConn *redigoConn) Do(commandName string, args ...interface{}) (reply interface{}, err error) {
+
+	// Total of calls of command
+	rConn.collector.commandCalls.With(prometheus.Labels{
+		"command": strings.ToUpper(commandName),
+	}).Inc()
+
+	return rConn.conn.Do(commandName, args...)
+}
+
+// Send writes the command to the client's output buffer.
+func (rConn *redigoConn) Send(commandName string, args ...interface{}) error {
+	return rConn.conn.Send(commandName, args...)
+}
+
+// Flush flushes the output buffer to the Redis server.
+func (rConn *redigoConn) Flush() error {
+	return rConn.conn.Flush()
+}
+
+// Receive receives a single reply from the Redis server
+func (rConn *redigoConn) Receive() (reply interface{}, err error) {
+	return rConn.conn.Receive()
+}
+
+// Do sends a command to the server and returns the received reply.
+// The timeout overrides the read timeout set when dialing the
+// connection.
+func (rConn *redigoConn) DoWithTimeout(timeout time.Duration, commandName string, args ...interface{}) (reply interface{}, err error) {
+	return rConn.conn.DoWithTimeout(timeout, commandName, args...)
+}
+
+// Receive receives a single reply from the Redis server. The timeout
+// overrides the read timeout set when dialing the connection.
+func (rConn *redigoConn) ReceiveWithTimeout(timeout time.Duration) (reply interface{}, err error) {
+	return rConn.conn.ReceiveWithTimeout(timeout)
 }

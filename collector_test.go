@@ -62,11 +62,11 @@ var _ = Describe("RedigoCollector", func() {
 			return nil
 		}, "test-02")
 
-		Expect(service.Collector.methodCalls.With(prometheus.Labels{
-			"method": SubscribeMetricMethodName,
+		Expect(service.Collector.commandCalls.With(prometheus.Labels{
+			"command": "PUBLISH",
 		}).Write(&metric)).To(BeNil())
 
-		Expect(metric.GetCounter().GetValue()).To(Equal(float64(4)))
+		Expect(metric.GetCounter().GetValue()).To(Equal(float64(2)))
 		close(done)
 	})
 

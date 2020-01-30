@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // SubscriptionHandler is called for each new message.
@@ -19,11 +18,6 @@ type SubscribedHandler func() error
 func (service *RedigoService) Publish(ctx context.Context, channel string, data interface{}) error {
 
 	counter := service.Collector.publishTrafficSize
-
-	// Total of calls of method
-	service.Collector.methodCalls.With(prometheus.Labels{
-		"method": SubscribeMetricMethodName,
-	}).Inc()
 
 	return service.RunWithConn(func(conn redis.ConnWithTimeout) error {
 		var message []byte
@@ -51,11 +45,6 @@ func (service *RedigoService) Publish(ctx context.Context, channel string, data 
 // subscribed function is called after the channels are subscribed. The subscription
 // function is called for each message.
 func (service *RedigoService) Subscribe(ctx context.Context, subscribed SubscribedHandler, subscription SubscriptionHandler, channels ...string) error {
-
-	// Total of calls of method
-	service.Collector.methodCalls.With(prometheus.Labels{
-		"method": SubscribeMetricMethodName,
-	}).Inc()
 
 	c, err := redis.Dial("tcp", service.Configuration.Address,
 		// Read timeout on server should be greater than ping period.
