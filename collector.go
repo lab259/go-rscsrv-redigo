@@ -9,17 +9,16 @@ import (
 
 //RedigoCollector struct to access metrics
 type RedigoCollector struct {
-	publishTrafficSize prometheus.Counter
-	methodCalls        *prometheus.CounterVec
-	subscribeAmount    prometheus.Gauge
-	subscribeSuccesses prometheus.Counter
-	subscribeFailures  prometheus.Counter
+	publishTrafficSize  prometheus.Counter
+	methodCalls         *prometheus.CounterVec
+	subscriptionsActive prometheus.Gauge
+	subscribeSuccesses  prometheus.Counter
+	subscribeFailures   prometheus.Counter
 }
 
-// RedigoCollectorOptions struct to add custom name in metrics
+// RedigoCollectorOptions struct to add custom options in metrics
 type RedigoCollectorOptions struct {
-	Separator string
-	Prefix    []string
+	Prefix string
 }
 
 const (
@@ -34,43 +33,37 @@ var redigoMetricLabels = []string{"method"}
 //RedigoCollectorDefaultOptions will return the instance of RedigoCollectorDefaultOptions with values default
 func RedigoCollectorDefaultOptions() RedigoCollectorOptions {
 	return RedigoCollectorOptions{
-		Separator: "_",
-		Prefix:    []string{"redigo"},
+		Prefix: "",
 	}
 }
-
-/*
-	Output with default options:
-
-	Ex: fmt.Sprintf("%spublishTrafficSize", prefix)
-	Exit: redigo_publish_traffic_size
-*/
 
 // NewRedigoCollector will return new instance of RedigoCollector with all metrics started
 func NewRedigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 
-	prefix := strings.Join(opts.Prefix[:], opts.Separator)
-	prefix += opts.Separator
+	prefix := opts.Prefix
+	if prefix != "" && !strings.HasSuffix(prefix, "_") {
+		prefix += "_"
+	}
 
 	return &RedigoCollector{
 		publishTrafficSize: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%spublish_traffic_size", prefix),
+			Name: fmt.Sprintf("redigo_%spublish_traffic_size", prefix),
 			Help: "Total of data trafficked",
 		}),
 		methodCalls: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%smethod_calls", prefix),
+			Name: fmt.Sprintf("redigo_%smethod_calls", prefix),
 			Help: "Total of calls of method Subscribe (Success or failures)",
 		}, redigoMetricLabels),
-		subscribeAmount: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: fmt.Sprintf("%ssubscribe_amount", prefix),
+		subscriptionsActive: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: fmt.Sprintf("redigo_%ssubscriptions_active", prefix),
 			Help: "Current total of subscriptions",
 		}),
 		subscribeSuccesses: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%ssubscribe_success", prefix),
+			Name: fmt.Sprintf("redigo_%ssubscribe_success", prefix),
 			Help: "Total of success when call Subscribed",
 		}),
 		subscribeFailures: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("%ssubscribe_failures", prefix),
+			Name: fmt.Sprintf("redigo_%ssubscribe_failures", prefix),
 			Help: "Total of failed when call Subscribed",
 		}),
 	}
@@ -79,7 +72,7 @@ func NewRedigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 
 func (collector *RedigoCollector) Describe(desc chan<- *prometheus.Desc) {
 	collector.methodCalls.Describe(desc)
-	collector.subscribeAmount.Describe(desc)
+	collector.subscriptionsActive.Describe(desc)
 	collector.subscribeSuccesses.Describe(desc)
 	collector.subscribeFailures.Describe(desc)
 	collector.publishTrafficSize.Describe(desc)
@@ -87,7 +80,7 @@ func (collector *RedigoCollector) Describe(desc chan<- *prometheus.Desc) {
 
 func (collector *RedigoCollector) Collect(metrics chan<- prometheus.Metric) {
 	collector.methodCalls.Collect(metrics)
-	collector.subscribeAmount.Collect(metrics)
+	collector.subscriptionsActive.Collect(metrics)
 	collector.subscribeSuccesses.Collect(metrics)
 	collector.subscribeFailures.Collect(metrics)
 	collector.publishTrafficSize.Collect(metrics)

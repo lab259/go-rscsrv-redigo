@@ -101,8 +101,8 @@ func (service *RedigoService) Subscribe(ctx context.Context, subscribed Subscrib
 				switch n.Count {
 				case len(channels):
 
-					// Increment 1 in subscribeAmount
-					service.Collector.subscribeAmount.Inc()
+					// Increment 1 in subscriptionsActive
+					service.Collector.subscriptionsActive.Inc()
 
 					// Notify application when all channels are subscribed.
 					if err := subscribed(); err != nil {
@@ -153,8 +153,8 @@ loop:
 		}
 	}
 
-	// Decrement 1 in subscribeAmount
-	service.Collector.subscribeAmount.Dec()
+	// Decrement 1 in subscriptionsActive
+	service.Collector.subscriptionsActive.Dec()
 
 	// Signal the receiving goroutine to exit by unsubscribing from all channels.
 	psc.Unsubscribe()

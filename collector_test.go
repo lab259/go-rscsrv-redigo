@@ -89,7 +89,7 @@ var _ = Describe("RedigoCollector", func() {
 
 		service.Subscribe(ctx, onSubscribed, func(channel string, data []byte) error {
 			Expect(data).To(Equal([]byte("third test")))
-			Expect(service.Collector.subscribeAmount.Write(&metric)).To(BeNil())
+			Expect(service.Collector.subscriptionsActive.Write(&metric)).To(BeNil())
 			Expect(metric.GetGauge().GetValue()).To(Equal(float64(1)))
 
 			cancel()
@@ -134,7 +134,7 @@ var _ = Describe("RedigoCollector", func() {
 			return nil
 		}, "test-03")
 
-		Expect(service.Collector.subscribeAmount.Write(&metric)).To(BeNil())
+		Expect(service.Collector.subscriptionsActive.Write(&metric)).To(BeNil())
 
 		Expect(metric.GetGauge().GetValue()).To(Equal(float64(0)))
 		close(done)
