@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/gomodule/redigo/redis"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/prometheus/client_golang/prometheus"
@@ -225,6 +226,93 @@ var _ = Describe("RedigoCollector", func() {
 		Expect(service.Collector.commandCalls.With(prometheus.Labels{
 			"method":  "Do",
 			"command": "PUBLISH",
+		}).Write(&metric)).To(BeNil())
+
+		Expect(metric.GetCounter().GetValue()).To(Equal(1.0))
+	})
+
+	It("should test method Do", func() {
+		var service RedigoService
+		var metric dto.Metric
+
+		Expect(service.ApplyConfiguration(Configuration{
+			Address: "localhost:6379",
+		})).To(BeNil())
+		Expect(service.Start()).To(BeNil())
+
+		defer service.Stop()
+
+		conn, err := service.GetConn()
+		Expect(err).To(BeNil())
+
+		connTwo, err := service.GetConn()
+		Expect(err).To(BeNil())
+
+		_, err = connTwo.Do("PUBLISH", "channel", []byte("Hi"))
+		Expect(err).To(BeNil())
+
+		psc := redis.PubSubConn{Conn: conn}
+		err = psc.Subscribe(redis.Args{}.AddFlat("channel")...)
+		Expect(err).To(BeNil())
+
+		done := make(chan string, 1)
+
+		go func() {
+			for {
+				switch r := psc.Receive().(type) {
+				case redis.Subscription:
+					done <- "Subscription"
+				case redis.Message:
+					Expect(r.Data).To(Equal([]byte("Hi")))
+					Expect(service.Collector.commandCalls.With(prometheus.Labels{
+						"method":  "Do",
+						"command": "PUBLISH",
+					}).Write(&metric)).To(BeNil())
+					Expect(metric.GetCounter().GetValue()).To(Equal(1.0))
+					done <- "Message"
+				}
+			}
+		}()
+
+	loop:
+		for {
+			select {
+			case <-done:
+				close(done)
+				break loop
+			}
+
+		}
+	})
+
+	It("should test method Send", func() {
+		var service RedigoService
+		var metric dto.Metric
+
+		Expect(service.ApplyConfiguration(Configuration{
+			Address: "localhost:6379",
+		})).To(BeNil())
+		Expect(service.Start()).To(BeNil())
+
+		defer service.Stop()
+
+		conn, err := service.GetConn()
+		Expect(err).To(BeNil())
+
+		conn.Send("SET", "command_1", "value of command")
+		conn.Send("GET", "command_1")
+		conn.Flush()
+
+		_, err = redis.Bytes(conn.Receive())
+		Expect(err).To(BeNil())
+
+		reply, err := redis.Bytes(conn.Receive())
+		Expect(err).To(BeNil())
+		Expect(string(reply)).To(Equal("value of command"))
+
+		Expect(service.Collector.commandCalls.With(prometheus.Labels{
+			"method":  "Send",
+			"command": "SET",
 		}).Write(&metric)).To(BeNil())
 
 		Expect(metric.GetCounter().GetValue()).To(Equal(1.0))
