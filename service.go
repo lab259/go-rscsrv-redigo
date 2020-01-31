@@ -39,7 +39,6 @@ type RedigoService struct {
 type redigoConn struct {
 	conn      redis.ConnWithTimeout
 	collector *RedigoCollector
-	stats     PoolStats
 }
 
 // ConnHandler handler redis connection with timeout
@@ -104,7 +103,7 @@ func (service *RedigoService) Start() error {
 		if err != nil {
 			return err
 		}
-		service.Collector = NewRedigoCollector(RedigoCollectorDefaultOptions())
+		service.Collector = NewRedigoCollector(service.pool, RedigoCollectorDefaultOptions())
 		service.setRunning(true)
 	}
 	return nil
