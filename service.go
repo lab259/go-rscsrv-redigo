@@ -177,18 +177,20 @@ func (rConn *redigoConn) Err() error {
 
 // Do sends a command to the server and returns the received reply.
 func (rConn *redigoConn) Do(commandName string, args ...interface{}) (reply interface{}, err error) {
+	start := time.Now()
+	reply, err = rConn.conn.Do(commandName, args...)
 
-	// Total of calls of command
-	rConn.collector.commandCalls.With(prometheus.Labels{
-		"command": strings.ToUpper(commandName),
-	}).Inc()
-
-	return rConn.conn.Do(commandName, args...)
+	incrementMetrics(rConn.collector, commandName, "Do", time.Since(start).Seconds())
+	return reply, err
 }
 
 // Send writes the command to the client's output buffer.
-func (rConn *redigoConn) Send(commandName string, args ...interface{}) error {
-	return rConn.conn.Send(commandName, args...)
+func (rConn *redigoConn) Send(commandName string, args ...interface{}) (err error) {
+	start := time.Now()
+	err = rConn.conn.Send(commandName, args...)
+
+	incrementMetrics(rConn.collector, commandName, "Send", time.Since(start).Seconds())
+	return err
 }
 
 // Flush flushes the output buffer to the Redis server.
@@ -198,7 +200,11 @@ func (rConn *redigoConn) Flush() error {
 
 // Receive receives a single reply from the Redis server
 func (rConn *redigoConn) Receive() (reply interface{}, err error) {
-	return rConn.conn.Receive()
+	start := time.Now()
+	reply, err = rConn.conn.Receive()
+
+	incrementMetrics(rConn.collector, "", "Receive", time.Since(start).Seconds())
+	return reply, err
 }
 
 // Do sends a command to the server and returns the received reply.
@@ -212,4 +218,21 @@ func (rConn *redigoConn) DoWithTimeout(timeout time.Duration, commandName string
 // overrides the read timeout set when dialing the connection.
 func (rConn *redigoConn) ReceiveWithTimeout(timeout time.Duration) (reply interface{}, err error) {
 	return rConn.conn.ReceiveWithTimeout(timeout)
+}
+
+func incrementMetrics(collector *RedigoCollector, commandName string, method string, duration float64) {
+
+	commandName = strings.ToUpper(commandName)
+
+	// Total of calls from method
+	collector.commandCalls.With(prometheus.Labels{
+		"command": commandName,
+		"method":  method,
+	}).Inc()
+
+	// Duration of method
+	collector.methodDuration.With(prometheus.Labels{
+		"command": commandName,
+		"method":  method,
+	}).Add(duration)
 }

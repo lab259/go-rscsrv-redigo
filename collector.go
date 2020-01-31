@@ -9,11 +9,12 @@ import (
 
 //RedigoCollector struct to access metrics
 type RedigoCollector struct {
-	publishTrafficSize  prometheus.Counter
-	commandCalls        *prometheus.CounterVec
 	subscriptionsActive prometheus.Gauge
+	publishTrafficSize  prometheus.Counter
 	subscribeSuccesses  prometheus.Counter
 	subscribeFailures   prometheus.Counter
+	commandCalls        *prometheus.CounterVec
+	methodDuration      *prometheus.CounterVec
 }
 
 // RedigoCollectorOptions struct to add custom options in metrics
@@ -28,8 +29,7 @@ const (
 	SubscribeMetricMethodName string = "Subscribe"
 )
 
-var redigoMetricLabels = []string{"method"}
-var redigoMetricCommandCallsLabel = []string{"command"}
+var redigoMetricsLabels = []string{"method", "command"}
 
 //RedigoCollectorDefaultOptions will return the instance of RedigoCollectorDefaultOptions with values default
 func RedigoCollectorDefaultOptions() RedigoCollectorOptions {
@@ -47,17 +47,13 @@ func NewRedigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 	}
 
 	return &RedigoCollector{
-		publishTrafficSize: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: fmt.Sprintf("redigo_%spublish_traffic_size", prefix),
-			Help: "Total of data trafficked",
-		}),
-		commandCalls: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: fmt.Sprintf("redigo_%scommand_calls", prefix),
-			Help: "Total of calls of command Subscribe (Success or failures)",
-		}, redigoMetricCommandCallsLabel),
 		subscriptionsActive: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: fmt.Sprintf("redigo_%ssubscriptions_active", prefix),
 			Help: "Current total of subscriptions",
+		}),
+		publishTrafficSize: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: fmt.Sprintf("redigo_%spublish_traffic_size", prefix),
+			Help: "Total of data trafficked",
 		}),
 		subscribeSuccesses: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: fmt.Sprintf("redigo_%ssubscribe_success", prefix),
@@ -67,6 +63,14 @@ func NewRedigoCollector(opts RedigoCollectorOptions) *RedigoCollector {
 			Name: fmt.Sprintf("redigo_%ssubscribe_failures", prefix),
 			Help: "Total of failed when call Subscribed",
 		}),
+		commandCalls: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: fmt.Sprintf("redigo_%scommand_calls", prefix),
+			Help: "Total of command calls (Success or failures)",
+		}, redigoMetricsLabels),
+		methodDuration: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: fmt.Sprintf("redigo_%smethod_duration", prefix),
+			Help: "Total of duration from method",
+		}, redigoMetricsLabels),
 	}
 
 }

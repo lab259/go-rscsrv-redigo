@@ -33,43 +33,6 @@ var _ = Describe("RedigoCollector", func() {
 		close(done)
 	})
 
-	It("should count all calls in method subscribe", func(done Done) {
-		var service RedigoService
-		var metric dto.Metric
-
-		Expect(service.ApplyConfiguration(Configuration{
-			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
-
-		defer service.Stop()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		onSubscribed := func() error {
-			Expect(service.Publish(ctx, "test-02", []byte("second test"))).To(Succeed())
-			return nil
-		}
-
-		service.Subscribe(ctx, onSubscribed, func(channel string, data []byte) error {
-			Expect(data).To(Equal([]byte("second test")))
-			cancel()
-			return nil
-		}, "test-02")
-
-		service.Subscribe(ctx, onSubscribed, func(channel string, data []byte) error {
-			Expect(data).To(Equal([]byte("second test")))
-			cancel()
-			return nil
-		}, "test-02")
-
-		Expect(service.Collector.commandCalls.With(prometheus.Labels{
-			"command": "PUBLISH",
-		}).Write(&metric)).To(BeNil())
-
-		Expect(metric.GetCounter().GetValue()).To(Equal(float64(2)))
-		close(done)
-	})
-
 	It("should increment when subscribed is called", func(done Done) {
 		var service RedigoService
 		var metric dto.Metric
@@ -205,6 +168,66 @@ var _ = Describe("RedigoCollector", func() {
 
 		Expect(metric.GetCounter().GetValue()).To(Equal(float64(2)))
 		close(done)
+	})
+
+	It("should test time of method", func() {
+		var service RedigoService
+		var metric dto.Metric
+
+		Expect(service.ApplyConfiguration(Configuration{
+			Address: "localhost:6379",
+		})).To(BeNil())
+		Expect(service.Start()).To(BeNil())
+
+		defer service.Stop()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		onSubscribed := func() error {
+			Expect(service.Publish(ctx, "test-06", []byte("test"))).To(Succeed())
+			return nil
+		}
+
+		service.Subscribe(ctx, onSubscribed, func(channel string, data []byte) error {
+			cancel()
+			return nil
+		}, "test-06")
+
+		Expect(service.Collector.methodDuration.With(prometheus.Labels{
+			"method":  "Do",
+			"command": "PUBLISH",
+		}).Write(&metric)).To(BeNil())
+
+		Expect(metric.GetCounter().GetValue()).To(BeNumerically(">", 0.0))
+	})
+
+	It("should test total calls of command", func() {
+		var service RedigoService
+		var metric dto.Metric
+
+		Expect(service.ApplyConfiguration(Configuration{
+			Address: "localhost:6379",
+		})).To(BeNil())
+		Expect(service.Start()).To(BeNil())
+
+		defer service.Stop()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		onSubscribed := func() error {
+			Expect(service.Publish(ctx, "test-06", []byte("test"))).To(Succeed())
+			return nil
+		}
+
+		service.Subscribe(ctx, onSubscribed, func(channel string, data []byte) error {
+			cancel()
+			return nil
+		}, "test-06")
+
+		Expect(service.Collector.commandCalls.With(prometheus.Labels{
+			"method":  "Do",
+			"command": "PUBLISH",
+		}).Write(&metric)).To(BeNil())
+
+		Expect(metric.GetCounter().GetValue()).To(Equal(1.0))
 	})
 
 })
