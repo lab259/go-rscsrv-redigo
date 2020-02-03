@@ -17,8 +17,8 @@ type RedigoCollector struct {
 	subscribeFailures   prometheus.Counter
 	commandCalls        *prometheus.CounterVec
 	methodDuration      *prometheus.CounterVec
-	ActiveCount         *prometheus.Desc
-	IdleCount           *prometheus.Desc
+	activeCount         *prometheus.Desc
+	idleCount           *prometheus.Desc
 }
 
 type PoolStats interface {
@@ -80,16 +80,16 @@ func NewRedigoCollector(pool PoolStats, opts RedigoCollectorOptions) *RedigoColl
 			Name: fmt.Sprintf("redigo_%smethod_duration", prefix),
 			Help: "Total of duration from method",
 		}, redigoMetricsLabels),
-		ActiveCount: prometheus.NewDesc(fmt.Sprintf("redigo_%sactive_count", prefix), "The number of connections actived in pool (used or not).", nil, nil),
-		IdleCount:   prometheus.NewDesc(fmt.Sprintf("redigo_%sidle_count", prefix), "The number of idle connections in the pool.", nil, nil),
+		activeCount: prometheus.NewDesc(fmt.Sprintf("redigo_%sactive_count", prefix), "The number of connections actived in pool (used or not).", nil, nil),
+		idleCount:   prometheus.NewDesc(fmt.Sprintf("redigo_%sidle_count", prefix), "The number of idle connections in the pool.", nil, nil),
 	}
 
 }
 
 // Describe returns the description of metrics colllected by this collector
 func (collector *RedigoCollector) Describe(desc chan<- *prometheus.Desc) {
-	desc <- collector.ActiveCount
-	desc <- collector.IdleCount
+	desc <- collector.activeCount
+	desc <- collector.idleCount
 	collector.commandCalls.Describe(desc)
 	collector.subscriptionsActive.Describe(desc)
 	collector.subscribeSuccesses.Describe(desc)
@@ -100,8 +100,8 @@ func (collector *RedigoCollector) Describe(desc chan<- *prometheus.Desc) {
 // Collect provides metrics to prometheus
 func (collector *RedigoCollector) Collect(metrics chan<- prometheus.Metric) {
 	stats := collector.pool.Stats()
-	metrics <- prometheus.MustNewConstMetric(collector.ActiveCount, prometheus.GaugeValue, float64(stats.ActiveCount))
-	metrics <- prometheus.MustNewConstMetric(collector.IdleCount, prometheus.GaugeValue, float64(stats.IdleCount))
+	metrics <- prometheus.MustNewConstMetric(collector.activeCount, prometheus.GaugeValue, float64(stats.ActiveCount))
+	metrics <- prometheus.MustNewConstMetric(collector.idleCount, prometheus.GaugeValue, float64(stats.IdleCount))
 	collector.commandCalls.Collect(metrics)
 	collector.subscriptionsActive.Collect(metrics)
 	collector.subscribeSuccesses.Collect(metrics)

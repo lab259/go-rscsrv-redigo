@@ -22,14 +22,18 @@ func (psf *poolStatsFake) Stats() redis.PoolStats {
 }
 
 var _ = Describe("RedigoCollector", func() {
-	It("should count total of data send using method Publish", func(done Done) {
-		var service RedigoService
-		var metric dto.Metric
 
+	var service RedigoService
+	var metric dto.Metric
+
+	BeforeEach(func() {
 		Expect(service.ApplyConfiguration(Configuration{
 			Address: "localhost:6379",
 		})).To(BeNil())
 		Expect(service.Start()).To(BeNil())
+	})
+
+	It("should count total of data send using method Publish", func(done Done) {
 
 		defer service.Stop()
 
@@ -45,13 +49,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should increment when subscribed is called", func(done Done) {
-		var service RedigoService
-		var metric dto.Metric
-
-		Expect(service.ApplyConfiguration(Configuration{
-			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
 
 		defer service.Stop()
 
@@ -74,13 +71,6 @@ var _ = Describe("RedigoCollector", func() {
 	}, 1)
 
 	It("should decrement when subscribed is finished", func(done Done) {
-		var service RedigoService
-		var metric dto.Metric
-
-		Expect(service.ApplyConfiguration(Configuration{
-			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
 
 		defer service.Stop()
 
@@ -115,13 +105,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should count failures when any error is found in subscribe", func(done Done) {
-		var service RedigoService
-		var metric dto.Metric
-
-		Expect(service.ApplyConfiguration(Configuration{
-			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
 
 		defer service.Stop()
 
@@ -154,13 +137,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should count successes when not found errors in subscribe", func(done Done) {
-		var service RedigoService
-		var metric dto.Metric
-
-		Expect(service.ApplyConfiguration(Configuration{
-			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
 
 		defer service.Stop()
 
@@ -182,13 +158,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should test time of method", func() {
-		var service RedigoService
-		var metric dto.Metric
-
-		Expect(service.ApplyConfiguration(Configuration{
-			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
 
 		defer service.Stop()
 
@@ -212,13 +181,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should test total calls of command", func() {
-		var service RedigoService
-		var metric dto.Metric
-
-		Expect(service.ApplyConfiguration(Configuration{
-			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
 
 		defer service.Stop()
 
@@ -242,13 +204,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should test method Do", func() {
-		var service RedigoService
-		var metric dto.Metric
-
-		Expect(service.ApplyConfiguration(Configuration{
-			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
 
 		defer service.Stop()
 
@@ -296,13 +251,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should test method Send", func() {
-		var service RedigoService
-		var metric dto.Metric
-
-		Expect(service.ApplyConfiguration(Configuration{
-			Address: "localhost:6379",
-		})).To(BeNil())
-		Expect(service.Start()).To(BeNil())
 
 		defer service.Stop()
 
