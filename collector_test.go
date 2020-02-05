@@ -269,8 +269,8 @@ var _ = Describe("RedigoCollector", func() {
 			collector.Describe(ch)
 			close(ch)
 		}()
-		Expect((<-ch).String()).To(ContainSubstring("redigo_active_pool_connections"))
-		Expect((<-ch).String()).To(ContainSubstring("redigo_idle_pool_connections"))
+		Expect((<-ch).String()).To(ContainSubstring("redigo_pool_active_connections"))
+		Expect((<-ch).String()).To(ContainSubstring("redigo_pool_idle_connections"))
 	})
 
 	It("should generate custom description name", func() {
@@ -283,8 +283,8 @@ var _ = Describe("RedigoCollector", func() {
 			collector.Describe(ch)
 			close(ch)
 		}()
-		Expect((<-ch).String()).To(ContainSubstring(fmt.Sprintf("redigo_%s_active_pool_connections", customName)))
-		Expect((<-ch).String()).To(ContainSubstring(fmt.Sprintf("redigo_%s_idle_pool_connections", customName)))
+		Expect((<-ch).String()).To(ContainSubstring(fmt.Sprintf("redigo_%s_pool_active_connections", customName)))
+		Expect((<-ch).String()).To(ContainSubstring(fmt.Sprintf("redigo_%s_pool_idle_connections", customName)))
 	})
 
 	It("should test default values", func() {
