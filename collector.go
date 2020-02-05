@@ -10,15 +10,15 @@ import (
 
 //RedigoCollector struct to access metrics
 type RedigoCollector struct {
-	pool                PoolStats
-	subscriptionsActive prometheus.Gauge
-	publishTrafficSize  prometheus.Counter
-	subscribeSuccesses  prometheus.Counter
-	subscribeFailures   prometheus.Counter
-	commandCalls        *prometheus.CounterVec
-	methodDuration      *prometheus.CounterVec
-	activeCount         *prometheus.Desc
-	idleCount           *prometheus.Desc
+	pool                  PoolStats
+	subscriptionsActive   prometheus.Gauge
+	publishTrafficSize    prometheus.Counter
+	subscribeSuccesses    prometheus.Counter
+	subscribeFailures     prometheus.Counter
+	commandCalls          *prometheus.CounterVec
+	methodDuration        *prometheus.CounterVec
+	activePoolConnections *prometheus.Desc
+	idlePoolConnections   *prometheus.Desc
 }
 
 type PoolStats interface {
@@ -80,16 +80,16 @@ func NewRedigoCollector(pool PoolStats, opts RedigoCollectorOptions) *RedigoColl
 			Name: fmt.Sprintf("redigo_%smethod_duration", prefix),
 			Help: "Total of duration from method",
 		}, redigoMetricsLabels),
-		activeCount: prometheus.NewDesc(fmt.Sprintf("redigo_%sactive_count", prefix), "The number of connections actived in pool (used or not).", nil, nil),
-		idleCount:   prometheus.NewDesc(fmt.Sprintf("redigo_%sidle_count", prefix), "The number of idle connections in the pool.", nil, nil),
+		activePoolConnections: prometheus.NewDesc(fmt.Sprintf("redigo_%sactive_pool_connections", prefix), "The number of connections actived in pool (used or not).", nil, nil),
+		idlePoolConnections:   prometheus.NewDesc(fmt.Sprintf("redigo_%sidle_pool_connections", prefix), "The number of idle connections in the pool.", nil, nil),
 	}
 
 }
 
 // Describe returns the description of metrics colllected by this collector
 func (collector *RedigoCollector) Describe(desc chan<- *prometheus.Desc) {
-	desc <- collector.activeCount
-	desc <- collector.idleCount
+	desc <- collector.activePoolConnections
+	desc <- collector.idlePoolConnections
 	collector.commandCalls.Describe(desc)
 	collector.subscriptionsActive.Describe(desc)
 	collector.subscribeSuccesses.Describe(desc)
@@ -100,8 +100,8 @@ func (collector *RedigoCollector) Describe(desc chan<- *prometheus.Desc) {
 // Collect provides metrics to prometheus
 func (collector *RedigoCollector) Collect(metrics chan<- prometheus.Metric) {
 	stats := collector.pool.Stats()
-	metrics <- prometheus.MustNewConstMetric(collector.activeCount, prometheus.GaugeValue, float64(stats.ActiveCount))
-	metrics <- prometheus.MustNewConstMetric(collector.idleCount, prometheus.GaugeValue, float64(stats.IdleCount))
+	metrics <- prometheus.MustNewConstMetric(collector.activePoolConnections, prometheus.GaugeValue, float64(stats.ActiveCount))
+	metrics <- prometheus.MustNewConstMetric(collector.idlePoolConnections, prometheus.GaugeValue, float64(stats.IdleCount))
 	collector.commandCalls.Collect(metrics)
 	collector.subscriptionsActive.Collect(metrics)
 	collector.subscribeSuccesses.Collect(metrics)

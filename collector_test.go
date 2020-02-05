@@ -33,9 +33,11 @@ var _ = Describe("RedigoCollector", func() {
 		Expect(service.Start()).To(BeNil())
 	})
 
-	It("should count total of data send using method Publish", func(done Done) {
-
+	AfterEach(func() {
 		defer service.Stop()
+	})
+
+	It("should count total of data send using method Publish", func(done Done) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		Expect(service.Publish(ctx, "test-01", "hello from subscription")).To(Succeed())
@@ -49,8 +51,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should increment when subscribed is called", func(done Done) {
-
-		defer service.Stop()
 
 		ctx, cancel := context.WithCancel(context.Background())
 		onSubscribed := func() error {
@@ -71,8 +71,6 @@ var _ = Describe("RedigoCollector", func() {
 	}, 1)
 
 	It("should decrement when subscribed is finished", func(done Done) {
-
-		defer service.Stop()
 
 		ctx, cancel := context.WithCancel(context.Background())
 		onSubscribed := func() error {
@@ -106,8 +104,6 @@ var _ = Describe("RedigoCollector", func() {
 
 	It("should count failures when any error is found in subscribe", func(done Done) {
 
-		defer service.Stop()
-
 		ctx, cancel := context.WithCancel(context.Background())
 		onSubscribed := func() error {
 			Expect(service.Publish(ctx, "test-04", []byte("four test"))).To(Succeed())
@@ -138,8 +134,6 @@ var _ = Describe("RedigoCollector", func() {
 
 	It("should count successes when not found errors in subscribe", func(done Done) {
 
-		defer service.Stop()
-
 		ctx, cancel := context.WithCancel(context.Background())
 		onSubscribed := func() error {
 			Expect(service.Publish(ctx, "test-05", []byte("five test"))).To(Succeed())
@@ -158,8 +152,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should test time of method", func() {
-
-		defer service.Stop()
 
 		ctx, cancel := context.WithCancel(context.Background())
 		onSubscribed := func() error {
@@ -182,8 +174,6 @@ var _ = Describe("RedigoCollector", func() {
 
 	It("should test total calls of command", func() {
 
-		defer service.Stop()
-
 		ctx, cancel := context.WithCancel(context.Background())
 		onSubscribed := func() error {
 			Expect(service.Publish(ctx, "test-06", []byte("test"))).To(Succeed())
@@ -204,8 +194,6 @@ var _ = Describe("RedigoCollector", func() {
 	})
 
 	It("should test method Do", func() {
-
-		defer service.Stop()
 
 		conn, err := service.GetConn()
 		Expect(err).To(BeNil())
@@ -252,8 +240,6 @@ var _ = Describe("RedigoCollector", func() {
 
 	It("should test method Send", func() {
 
-		defer service.Stop()
-
 		conn, err := service.GetConn()
 		Expect(err).To(BeNil())
 
@@ -283,8 +269,8 @@ var _ = Describe("RedigoCollector", func() {
 			collector.Describe(ch)
 			close(ch)
 		}()
-		Expect((<-ch).String()).To(ContainSubstring("redigo_active_count"))
-		Expect((<-ch).String()).To(ContainSubstring("redigo_idle_count"))
+		Expect((<-ch).String()).To(ContainSubstring("redigo_active_pool_connections"))
+		Expect((<-ch).String()).To(ContainSubstring("redigo_idle_pool_connections"))
 	})
 
 	It("should generate custom description name", func() {
@@ -297,8 +283,8 @@ var _ = Describe("RedigoCollector", func() {
 			collector.Describe(ch)
 			close(ch)
 		}()
-		Expect((<-ch).String()).To(ContainSubstring(fmt.Sprintf("redigo_%s_active_count", customName)))
-		Expect((<-ch).String()).To(ContainSubstring(fmt.Sprintf("redigo_%s_idle_count", customName)))
+		Expect((<-ch).String()).To(ContainSubstring(fmt.Sprintf("redigo_%s_active_pool_connections", customName)))
+		Expect((<-ch).String()).To(ContainSubstring(fmt.Sprintf("redigo_%s_idle_pool_connections", customName)))
 	})
 
 	It("should test default values", func() {
